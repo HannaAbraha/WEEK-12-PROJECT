@@ -4,7 +4,7 @@ class Payroll {
         this.positions = [];
     }
 
-    addRoom(name, salary) {
+    addPosition(name, salary) {
         this.salary.push(new salary(name, salary));
     }
 }
@@ -12,12 +12,13 @@ class Payroll {
 class Position {
     constructor(name, salary) {
         this.name = name;
-        salary = salary;
+        this.salary = salary;
     }
 }
 
 class PayrollService {
     static url = 'https://640a0f10d16b1f3ed6e55258.mockapi.io/payroll';
+    // console.log(PayrollService);
 
     static getAllPayrolls() {
         return $.get(this.url);
@@ -57,7 +58,7 @@ class DOMManager {
         PayrollService.getAllPayrolls().then(payrolls => this.render(payrolls));
     }
 
-    static createPayroll(name)
+    static createPayroll(name) {
         PayrollService.createPayroll(new Payroll(name))
             .then(() => {
                 return PayrollService.getAllPayrolls();
@@ -65,18 +66,18 @@ class DOMManager {
             .then((payrolls) => this.render(payrolls));
     }
 
-    static deletePayroll(id) {
-        PayrollService.deletePayroll(id)
+    static deletePayroll(name) {
+        PayrollService.deletePayroll(new Payroll(name))
             .then(() =>{
                 return PayrollService.getAllPayrolls();
             })
-            .then((payrolls) => this.render(this.payrolls));
+            .then((payrolls) => this.render(payrolls));
     }
 
-    static addName(id) {
-        for (let payroll of this.payroll) {
+    static addEmployee(id) {
+        for (let payroll of this.payrolls) {
             if(payroll._id == id) {
-                payroll.names.push(new Name($(`#${payroll._id}-employee-name`).val(), $(`#${payroll._id}-employee-salary`).val()));
+                payroll.positions.push(new Position($(`#${payroll._id}-employee-name`).val(), $(`#${payroll._id}-employee-salary`).val()));
                 PayrollService.updatePayroll(payroll)
                     .then(() => {
                         return PayrollService.getAllPayrolls();
@@ -89,9 +90,9 @@ class DOMManager {
     static deleteEmployee(payrollId, employeeId) {
         for (let payroll of this.payrolls) {
             if (payroll._id == payrollId) {
-                for (let employee of payroll.employees) {
+                for (let employee of payroll.positions) {
                     if (employee._id == employeeId) {
-                        payroll.employees.splice(payroll.employees.indexOf(room), 1);
+                        payroll.positions.splice(payroll.positions.indexOf(room), 1);
                         PayrollService.updatePayroll(payroll)
                             .then(() => {
                                 return PayrollService.getAllPayrolls();
@@ -107,8 +108,9 @@ class DOMManager {
         this.payrolls = payrolls;
         $(`#app`).empty();
         for (let payroll of payrolls) {
+            console.log("text payroll,",payroll);
             $('#app').prepend(
-                `<div id="${payroll._id}" class="card"
+                `<div id="${payroll._id}" class="card">
                     <div class="card-header">
                         <h2>${payroll.name}</h2>
                         <button class="btn btn-danger" onclick="DOMManager.deletePayroll('${payroll._id}')">Delete</button>
@@ -128,7 +130,7 @@ class DOMManager {
                     </div>
                 </div><br>`
             );
-            for (let employee of payroll.employees) {
+            for (let employee of payroll.positions) {
                 $(`#${payroll._id}`).find('.card-body').append(
                  `<p>
                     <span id="name-${employee._id}"><strong>Name: </strong> ${employee.name}</span>
@@ -141,9 +143,9 @@ class DOMManager {
 
 }
 
-$('#create-new-payroll').click(() => {
+$('#create-new-employee').click(() => {
     DOMManager.createPayroll($('#new-employee-name').val());
-    $('#new-employee').val('');
+    $('#new-employee-name').val('');
 });
 
 DOMManager.getAllPayrolls();
